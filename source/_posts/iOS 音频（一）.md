@@ -7,8 +7,6 @@ tags:
 categories: iOS开发
 ---
 
-# iOS 音频（一）
-
 > 本篇是在做完公司的合拍需求后，对于音频处理的一些总结，如有错误的地方请指正
 
 ## 音频基础知识
@@ -78,7 +76,7 @@ AVAudioSession.sharedInstance()
 
 目前`AVAudioSession` 所支持的`category` 共有 7 种：
 
-| Category                                | 是否会被静音键或锁屏键静音 | 是否打断不支持混音播放的应用 | 是否允许音频输入/输出 | 解释                                                |
+| Category                                | 是否会被静音<br>键或锁屏键静音 | 是否打断不支持混音<br>播放的应用 | 是否允许音频<br>输入/输出 | <div style="width: 150pt">解释</div> |
 | --------------------------------------- | -------------------------- | ---------------------------- | --------------------- | --------------------------------------------------- |
 | AVAudioSessionCategoryAmbient           | Yes                        | NO                           | 只输出                | 只播放音频，不会被打断                              |
 | AVAudioSessionCategoryAudioProcessing   | NO                         | YES                          | 无输入和输出          | 音频处理                                            |
@@ -87,6 +85,8 @@ AVAudioSession.sharedInstance()
 | AVAudioSessionCategoryPlayback          | NO                         | 默认 YES，可重写开关置为 NO  | 只输出                | 只播放音频，一般音乐播放器都会选择这个              |
 | AVAudioSessionCategoryRecord            | NO（锁屏时依然保持录制）   | YES                          | 只输入                | 只支持音频录制                                      |
 | AVAudioSessionCategorySoloAmbient(默认) | YES                        | YES                          | 只输出                | 只播放音频，会被打断                                |
+
+
 
 **第一个坑：**
 
@@ -120,7 +120,7 @@ AVAudioSession.sharedInstance().setActive(true, options: .notifyOthersOnDeactiva
 
 ### AVAudioSession Option
 
-| Option                                       | 说明                 | 兼容的 Category                                              | 解释                                                         |
+| Option                                       | 说明                 | 兼容的 Category                                              | <div style="width: 150pt">解释</div> |
 | -------------------------------------------- | -------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | AVAudioSessionCategoryOptionMixWithOthers    | 允许和其他音频 mix   | AVAudioSessionCategoryPlayAndRecord AVAudioSessionCategoryPlayback AVAudioSessionCategoryMultiRoute | 例如：当前App播放的声音想与QQ音乐播放的声音并存              |
 | AVAudioSessionCategoryOptionDuckOthers       | 智能调低冲突音频音量 | AVAudioSessionCategoryPlayAndRecord AVAudioSessionCategoryPlayback AVAudioSessionCategoryMultiRoute | 例如：导航时，语音播报并不会打断QQ音乐的声音，只是让其他App声音变小 |
@@ -146,7 +146,7 @@ func setCategory(_ category: AVAudioSession.Category, options: AVAudioSession.Ca
 
 以上的`Category`和`Option`基本上能够满足大部分的App使用，对于特定的情况，例如通话、游戏，`AVAudioSession`还有自己特殊的优化 `Mode`：
 
-| Mode                             | 兼容的 Category                                              | 说明                                                     |
+| Mode                             | 兼容的 Category                                              | <div style="width: 150pt">说明</div> |
 | -------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------- |
 | AVAudioSessionModeDefault        | All                                                          | 默认格式                                                 |
 | AVAudioSessionModeVoiceChat      | AVAudioSessionCategoryPlayAndRecord                          | VoIP 类型的应用                                          |
