@@ -7,52 +7,14 @@ tags:
 categories: iOS开发
 ---
 
-> 本篇是在做完公司的合拍需求后，对于音频处理的一些总结，如有错误的地方请指正
-
-## 音频基础知识
-
-目前常见的音频格可以大致分为两种：
-
-1. 有损压缩，例如：`MP3`、`AAC`、`OGG`、`WMA`
-2. 无损压缩，例如：`ALAC`、`APE`、`FLAC`、`WAV`
-
-其中，对声音进行采样、量化过程被称为`脉冲编码调制`（Pulse Code Modulation），简称`PCM`。PCM数据是最原始的音频数据完全无损，但占用空间大，(`PCM`电脑上可以用`FFPlay` 设置采样率后播放)
-
-<!--more-->  
-**关于音频计算**
-
-- 采样率：指**每秒钟取得声音样本的次数**。采样频率越高，声音的质量也就越好，声音的还原也就越真实，但同时它占的资源比较多。由于人耳的分辨率很有限，太高的频率并不能分辨出来。
-- 采样位数：即**采样值**或取样值（声音的连续强度被数字表示后可以分为多少级，即将采样样本幅度量化）。它是用来衡量声音波动变化的一个参数，也可以说是声卡的分辨率。它的数值越大，分辨率也就越高，所发出声音的能力越强。
-  - 8 bit -> 记录 256（2^8）个数，振幅划分成 256 个等级 
-  - 16 bit -> 记录65536(2^16) 个数，振幅划分成 65536 个等级 
-- 通道数：**声音的通道的数目**。常有单声道和立体声之分，单声道的声音只能使用一个喇叭发声（有的也处理成两个喇叭输出同一个声道的声音），立体声可以使两个喇叭都发声（一般左右声道有分工） ，更能感受到空间效果，当然还有更多的通道数。
-  - 单声道 mono
-  - 双声道 stereo （左右）
-  - 2.1 
-  - 5.1
-  - 7.1
-- 每秒数据大小：采样率 * 采样通道 * 位深度 / 8
-
-以项目中为例：
-
-> 采样率 = 44100，采样通道 = 1，位深度 =16，采样间隔 = 20ms
->
-> 一秒钟50帧 ，每帧大小为： 88200 / 50 = 1764 byte == 882 short
-
 ## AVAudioSession
 
 > 做项目的时候，合拍需求需要同时播放音视频，同时需要录制用户的声音。在做的过程中发现，不去设置AVAudioSession，则使用蓝牙耳机时，视频播放的声音仍然会通过扬声器播放，以及一些意想不到的问题。
 
 
-
-`AVAudioSession` 会自带一些默认的设置，以便在没有设置的情况下，能够应对一些简单的场景，先来考虑两个常见的场景：
-
-1. 语音通话时，手机的其他app正在播放音乐
-2. 地图导航，当需要语音播报，手机的音乐会减少
+`AVAudioSession` 会自带一些默认的设置，以便在没有设置的情况下，能够应对一些简单的场景
 
 ### 作用
-
-
 
 ![图片来自官方](https://imagedatabase-1259343097.cos.ap-beijing.myqcloud.com/blogImage/ASPG_intro_2x.png)
 
@@ -136,10 +98,7 @@ func setCategory(_ category: AVAudioSession.Category, options: AVAudioSession.Ca
 
 第二个坑：
 
-一般来说，所有的`Category`和`Option`都会遵循 `last in wins` 原则，即最后接入的音频设备作为输入或输出的主设备。同时用于播放音频的App都需要考虑到用户使用蓝牙耳机的情况，若不设置`AVAudioSessionCategoryOptionAllowBluetooth`,则可能出现虽然链接蓝牙耳机，但在`一边录制一边播放`的情况下，音频还是会从扬声器种播放出来。
-
-
-
+一般来说，所有的`Category`和`Option`都会遵循 `last in wins` 原则，即最后接入的音频设备作为输入或输出的主设备。同时用于播放音频的App都需要考虑到用户使用蓝牙耳机的情况，若不设置`AVAudioSessionCategoryOptionAllowBluetooth`,则可能出现虽然链接蓝牙耳机，但在`一边录制一边播放`的情况下，音频还是会从扬声器中播放出来。
 
 
 ### AVAudioSession Mode
@@ -155,6 +114,9 @@ func setCategory(_ category: AVAudioSession.Category, options: AVAudioSession.Ca
 | AVAudioSessionModeMoviePlayback  | AVAudioSessionCategoryPlayback                               | 适用于播放视频的应用                                     |
 | AVAudioSessionModeMeasurement    | AVAudioSessionCategoryPlayAndRecord AVAudioSessionCategoryRecord AVAudioSessionCategoryPlayback | 最小化系统（？？？ 不是很清楚）                          |
 | AVAudioSessionModeVideoChat      | AVAudioSessionCategoryPlayAndRecord                          | 视频聊天类型应用                                         |
+**几个需要注意的地方**
+- `AVAudioSessionModeVoiceChat` 适用于VoIP（基于IP的语音传输英语：Voice over Internet Protocol，缩写为VoIP）这个模式下，会自动配置上`AVAudioSessionCategoryOptionAllowBluetooth` 和 `AVAudioSessionCategoryOptionDefaultToSpeaker`。系统将自动选择最佳的麦克风组合来支持视频聊天
+- `AVAudioSessionModeVideoRecording` 适用于使用摄像头采集视频的应用, 与`AVCaptureSession` 结合来用可以更好地控制音视频的输入输出路径。(例如，设置 `automaticallyConfiguresApplicationAudioSession` 属性，系统会自动选择最佳输出路径.)
 
 ## 状态监听
 
@@ -227,11 +189,98 @@ observers.append(NotificationCenter.default.addObserver(forName: AVAudioSession.
 | AVAudioSessionRouteChangeReasonRouteConfigurationChange   | Rotuer的配置改变了           |
 
 
-
 可以通过判断返回的枚举值，去做相应的处理，例如拔出耳机时，停止播放，更新耳机状体等等。
+
+## 其他的坑
+
+### PlayAndRecord
+在一般情况下，当没有接入任何音频设备时，声音会通过**扬声器**来播放，但是一旦设置了`PlayAndRecord`,会将默认的输出设备转为**听筒**。
+
+解决办法：
+```swift
+// 第一种：通过overrideOutputAudioPort 方法设置
+AVAudioSession.sharedInstance().overrideOutputAudioPort(AVAudioSession.PortOverride.speaker)
+// 第二种：设置AVAudioSessionCategoryOptionDefaultToSpeaker
+AVAudioSession.sharedInstance().setCategory(.playAndRecord, options: .defaultToSpeaker)
+```
+第三种：[MPVolumeView](https://developer.apple.com/documentation/mediaplayer/mpvolumeview) 让用户自己选择
+
+### AirPods
+AirPods在不同系统上的表现
+AirPods 系列耳机，对于系统的要求不一样，具体要求可以去[官网](https://support.apple.com/zh-cn/HT207974)查看
+![图片来自苹果官网](https://imagedatabase-1259343097.cos.ap-beijing.myqcloud.com/blogImage/WX20211026-204244%402x.png)
+例如：
+AirPods在iOS10.2以下表现和普通的蓝牙耳机类似，能手动通过蓝牙连接上手机。
+AirPods在iOS10.2以上的能支持双击操作，双击播放音乐，双击停止音乐；分别对应远程线控中的`UIEventSubtypeRemoteControlPlay`、`UIEventSubtypeRemoteControlStop`等事件。
+
+判断是否是AirPod
+```swift
+func isAirPods() -> Bool {
+        let des = AVAudioSession.sharedInstance().currentRoute.outputs
+        for de in des {
+            if de.portName.contains("AirPods") {
+                return true
+            }
+        }
+        return false
+    }
+```
+**1. 远程控制的坑**
+
+在使用AirPods 的情况下，`AVAudioSession` 的category 设置为`AVAudioSessionCategoryPlayback`，此时APP只用于播放音频，能够**自动适配远程控制**。**但是**如果是`AVAudioSessionCategoryPlayAndRecord`，此时APP既需要播放音频，也需要录制音频。**不能自动适配远程控制** 
+解决办法：
+```swift
+// 设置option .alllowBluetooth  PS: 设备需要的系统不满足使用
+try? AVAudioSession.sharedInstance().setCategory(.playAndRecord, options: .allowBluetooth)
+// 设置option .allowBluetoothA2DP  PS: 设备需要的系统满足使用 且 iOS10 以后才有这个选项
+try? AVAudioSession.sharedInstance().setCategory(.playAndRecord, options: .allowBluetoothA2DP)
+```
+**2. 音频输出的问题**
+
+对于一般情况：
+ - `AVAudioSessionCategoryPlayAndRecord` + `AVAudioSessionModeDefault` + `AVAudioSessionCategoryOptionDefaultToSpeaker` 声音会通过扬声器播放出来
+ - `AVAudioSessionCategoryPlayAndRecord` + `AVAudioSessionModeDefault` 声音会通过听筒播放出来
+
+
+**但是**在AirPod的情况下:
+
+- `AVAudioSessionCategoryPlayAndRecord` + `AVAudioSessionModeDefault` + `AVAudioSessionCategoryOptionAllowBluetoothA2DP` 能连接上，并能远程控制。
+
+- `AVAudioSessionCategoryPlayAndRecord` + `AVAudioSessionModeDefault` + `AVAudioSessionCategoryOptionAllowBluetooth` 能连接上，但是不能远程控制。
+
+如果是设置的其它模式，比如设置了模式，坑坑坑坑
+
+- `AVAudioSessionCategoryPlayAndRecord` + `AVAudioSessionModeVoiceChat`
+- `AVAudioSessionCategoryPlayAndRecord` + `AVAudioSessionModeDefault` + `AVAudioSessionCategoryOptionDefaultToSpeaker`
+
+不能连上Airpods了，并且在控制中心面板中也没有AirPods选项。
+
+**3. 录制播放声音不清晰**
+
+打Log发现，默认的`AVAudioSessionCategoryPlayback` 模式下，耳机使用的模式是`BluetoothA2DPOutput`
+
+**但是** 在`AVAudioSessionCategoryPlayAndRecord` 模式下，耳机使用的是`BluetoothHFP`
+> - HeadsetPro-file（HSP）代表耳机功能，提供手机与耳机之间通信所需的基本功能。
+> - HandProfile（HFP）则代表免提功能，HFP在HSP的基础上增加了某些扩展功能。
+> - Advanced Audio Distribution Profile（A2DP），指的是蓝牙音频传输模型协定。
+> 
+> HFP格式的蓝牙耳机支持手机功能比较完整，消费者可在耳机上操作手机设定好的重拨、来电保留、来电拒听等免提选项功能。A2DP是高级音频传送规格，允许传输立体声音频信号，相比用于 HSP 和 HFP 的单声道加密，质量要好得多。
+> https://www.jianshu.com/p/04a1dc879c13
+
+在Apple 官方描述中：
+> "If an application uses the setPreferredInput:error: method to select a Bluetooth HFP input, the output will automatically be changed to the Bluetooth HFP output. **Moreover, selecting a Bluetooth HFP output using the MPVolumeView's route picker will automatically change the input to the Bluetooth HFP input. Therefore both the input and output will always end up on the Bluetooth HFP device even though only the input or output was set individually.**"
+
+大众的解决方案：
+
+- 维持原状的方案，就是继续采用HFP来进行音频的输入和输出，这种方案可以保证输入音频由支架的麦克风来提供，输出继续由支架来进行转发。但是，问题就是会导致音乐播放的音质差.
+
+- 采用A2DP来进行高质量的蓝牙音频输出，保证歌曲、声音的播放质量，采用手机麦克风来进行音频输入而不通过蓝牙来采集音频。
+
+
+
 
 
 ## 总结
 
-以上就是对于一些音频知识的总结，最开始的两个场景解决办法应该自然而然出来了，本篇主要是针对`AVAudioSession`做的分析，若有问题，请还望多包涵和指正。下一小节将会去介绍音频处理相关的内容。
+以上就是对于一些音频知识的总结，本篇主要是针对`AVAudioSession`做的分析，若有问题，请还望多包涵和指正。下一小节将会去介绍音频处理相关的内容。
 
