@@ -24,7 +24,7 @@ categories: iOS开发
 2. 告诉系统如何使用音频：录音、播放、边录边播
 3. 设置输入输出设备
 
-
+<!--more-->  
 
 APP启动的时候会自动帮激活`AVAudioSession`，APP维护一个`AVAudioSession` 的单例
 
@@ -264,7 +264,7 @@ try? AVAudioSession.sharedInstance().setCategory(.playAndRecord, options: .allow
 > - HandProfile（HFP）则代表免提功能，HFP在HSP的基础上增加了某些扩展功能。
 > - Advanced Audio Distribution Profile（A2DP），指的是蓝牙音频传输模型协定。
 > 
-> HFP格式的蓝牙耳机支持手机功能比较完整，消费者可在耳机上操作手机设定好的重拨、来电保留、来电拒听等免提选项功能。A2DP是高级音频传送规格，允许传输立体声音频信号，相比用于 HSP 和 HFP 的单声道加密，质量要好得多。
+> HFP格式的蓝牙耳机支持手机功能比较完整，用户可在耳机上操作手机设定好的重拨、来电保留、来电拒听等免提选项功能。A2DP是高级音频传送规格，允许传输立体声音频信号，相比用于 HSP 和 HFP 的单声道加密，质量要好得多。
 > https://www.jianshu.com/p/04a1dc879c13
 
 在Apple 官方描述中：
